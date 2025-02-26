@@ -1,0 +1,24 @@
+{
+    "name": "WiFiEnvironmentMgr",
+    "keywords": "iot, home, automation, wifi, mqtt, client, esp8266, esp32",
+    "description": "A lookup facility for SSID-keyed configuration information stored in SPIFFS",
+    "authors":
+    {
+      "name": "David Hawley",
+      "url": "https://github.com/Sojourneer"
+    },
+    "license": "MIT",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/Sojourneer/WiFiEnvironmentMgr.git"
+    },
+    "version": "1.0.0",
+    "frameworks": "arduino",
+    "platforms": ["espressif8266"],
+    "headers": ["WiFiEnvironmentMgr.h"],
+    "build":
+    {
+    }
+  }
+  
