@@ -28,12 +28,12 @@ class WiFiEnvironmentMgr
         JsonObject config;
 };
 
-
+// Extension with MQTT configuration information
 class MqttEnvironmentMgr: public WiFiEnvironmentMgr
 {
     public:
         bool hasMQTT_Config() { return !json_mqtt.isNull(); };
-        JsonObject set_environment(const char *ssid, const char *mac) {
+        void set_environment(const char *ssid, const char *mac) {
             WiFiEnvironmentMgr::set_environment(ssid, mac);
             json_mqtt = config["mqtt"];
         };
