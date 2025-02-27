@@ -1,7 +1,6 @@
 #include "WiFiEnvironmentMgr.h"
 #include <ArduinoJson.h>
 #include <ESP8266WiFiMulti.h>
-extern ESP8266WiFiMulti wifiMulti; 
 
 void WiFiEnvironmentMgr::load(const char *fn)
 {
@@ -97,3 +96,76 @@ void WiFiEnvironmentMgr::addAPs()
         wifiMulti.addAP(json_ssid, config["wifi_password"]);
     }
 };
+
+// connect to wifi – returns true if WiFi estabished (either AP or STA)
+bool WiFiEnvironmentMgr::ConnectWifi(void)
+{
+  bool state = true;
+  int i = 0;
+
+  addAPs();
+
+  Serial.print("Scanning...");
+  int n = WiFi.scanNetworks();
+  if(n == 0) {
+    Serial.println("No networks found");
+    state = false;
+  } else {
+    Serial.print(n);
+    Serial.println(" networks found");
+    Serial.print("Connecting");
+    wl_status_t wifistatus;
+    while ((wifistatus = wifiMulti.run()) != WL_CONNECTED) {
+      delay(10000);
+      Serial.print(".");
+      Serial.printf("%d ", wifistatus);
+      if (i > 10){
+        state = false;
+        break;
+      }
+      i++;
+    }
+  }
+
+  if (state){
+    Serial.println("");
+    Serial.print("Connected to ");
+    String ssid = WiFi.SSID();
+    Serial.print(WiFi.SSID());
+    Serial.print(", ");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    //TODO Do we need it?  If so, use the MQTT_ClientId instead
+    #ifdef ENABLE_MDNS
+    uint8_t shortname [18];
+    sprintf((char *)shortname, "PIR%d", WiFi.localIP()[3]);
+    WiFi.hostname((const char *)shortname);
+    MDNS.begin((const char *)shortname);
+    #endif
+
+    return true;
+  } 
+  
+  Serial.println("");
+  Serial.println("Connection failed. Fallback to SoftAP");
+  //UPDATE_INDICATOR(255, 0, 0);
+
+  IPAddress local_IP(192,168,2,1);
+  IPAddress gateway(192,168,2,1);
+  IPAddress subnet(255,255,255,0);
+
+  if(false == WiFi.softAPConfig(local_IP, gateway, subnet)) {
+    Serial.println("SoftAP config failed.");
+    device_wifi_status = DEVICE_NO_WIFI;
+    return false;
+  }
+  if(false == WiFi.softAP(SOFTAP_SSID, SOFTAP_PSK, SOFTAP_CHANNEL, SOFTAP_HIDDEN, SOFTAP_MAX_CONNECTIONS)) {
+    device_wifi_status = DEVICE_NO_WIFI;
+    return false;
+  }
+  
+  device_wifi_status = DEVICE_SOFT_AP_READY;
+
+  return true;
+}
