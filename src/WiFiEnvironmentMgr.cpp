@@ -2,6 +2,8 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFiMulti.h>
 
+const char *config_filename = "/environments.json";
+
 void WiFiEnvironmentMgr::load(const char *fn)
 {
     File file = SPIFFS.open(fn, "r");
@@ -31,7 +33,7 @@ void WiFiEnvironmentMgr::load(const char *fn)
 void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
 {
     if(!isLoaded) {
-        load("/environments.json");
+        load(config_filename);
         isLoaded = true;
     }
     JsonObject root = doc.as<JsonObject>();
@@ -84,7 +86,7 @@ void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
 void WiFiEnvironmentMgr::addAPs()
 {
     if(!isLoaded) {
-        load("/environments.json");
+        load(config_filename);
         isLoaded = true;
     }
     JsonObject root = doc.as<JsonObject>();
@@ -113,7 +115,7 @@ bool WiFiEnvironmentMgr::ConnectWifi(void)
   } else {
     Serial.print(n);
     Serial.println(" networks found");
-    Serial.print("Connecting");
+    Serial.print("Connecting to WiFi ");
     wl_status_t wifistatus;
     while ((wifistatus = wifiMulti.run()) != WL_CONNECTED) {
       delay(10000);
