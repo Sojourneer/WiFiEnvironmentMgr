@@ -61,7 +61,7 @@ void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
         else
             subnet.clear();
 
-        JsonObject mac_ip = config["mac_ip"];
+        JsonObject mac_ip = config["per_mac"];
         if(!mac_ip.isNull()) {
             String mac = WiFi.macAddress();
 
@@ -75,9 +75,11 @@ void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
                         mac_entry["comment"].as<const char *>());
                     local_ip.fromString(ip.c_str());
                 }
+                JsonString jhost = mac_entry["host"];
+                host = jhost.isNull() ? nullptr : jhost.c_str();
             }
-        }
 
+        }
         return;
     }
 
@@ -137,14 +139,6 @@ bool WiFiEnvironmentMgr::ConnectWifi(void)
     Serial.print(", ");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
-
-    //TODO Do we need it?  If so, use the MQTT_ClientId instead
-    #ifdef ENABLE_MDNS
-    uint8_t shortname [18];
-    sprintf((char *)shortname, "PIR%d", WiFi.localIP()[3]);
-    WiFi.hostname((const char *)shortname);
-    MDNS.begin((const char *)shortname);
-    #endif
 
     return true;
   } 

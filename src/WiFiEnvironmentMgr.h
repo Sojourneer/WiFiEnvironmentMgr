@@ -28,7 +28,7 @@ class WiFiEnvironmentMgr
         IPAddress               local_ip;
         IPAddress               gateway;
         IPAddress               subnet;
-
+        const char              *host;
 
     private:
         bool            isLoaded = false;
