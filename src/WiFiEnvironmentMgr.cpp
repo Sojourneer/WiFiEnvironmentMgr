@@ -69,10 +69,9 @@ void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
             if(! mac_entry.isNull()) {
                 JsonString ip = mac_entry["ip"];
                 if(!ip.isNull()) {
-                    Serial.printf("Setting IP from MAC: %s -> %s [%s]\n",
+                    Serial.printf("Setting IP from MAC: %s -> %s\n",
                         mac.c_str(),
-                        ip.c_str(),
-                        mac_entry["comment"].as<const char *>());
+                        ip.c_str());
                     local_ip.fromString(ip.c_str());
                 }
                 if(mac_entry["host"].is<JsonString>()) {
