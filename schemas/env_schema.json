@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "patternProperties": {
+        "^[a-zA-Z0-9-_].+$": {
+            "type": "object",
+            "properties": {
+                "wifi_password": { "type": "string" },
+                "gateway": { "type": "string", "format":"ipv4"  },
+                "subnet": { "type": "string", "format":"ipv4" },
+                "per_mac": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-F0-9][A-F0-9]:[A-F0-9][A-F0-9]:[A-F0-9][A-F0-9]:[A-F0-9][A-F0-9]:[A-F0-9][A-F0-9]:[A-F0-9][A-F0-9]$": {
+                            "type": "object",
+                            "properties": {
+                                "ip": { "type": "string", "format":"ipv4" },
+                                "host": { "type": "string" },
+                                "comment": { "type": "string" }
+                            },
+                            "required": [ "ip", "host" ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "mqtt": {
+                    "type": "object",
+                    "properties": {
+                        "broker": { "type": "string" },
+                        "port": { "type": "integer" },
+                        "user": { "type": "string" },
+                        "password": { "type": "string" }
+                    },
+                    "required": [ "broker", "port", "user", "password" ]
+                },
+                "required": [ "wifi_ password", "gateway", "subnet" ]
+            },
+            "additionalProperties":{}
+        }
+    },
+    "additionalProperties": {}
+}

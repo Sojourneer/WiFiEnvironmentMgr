@@ -3,8 +3,9 @@
 #include <ESP8266WiFiMulti.h>
 
 const char *config_filename = "/environments.json";
+const char *APconfig_filename = "/AP.json";
 
-void WiFiEnvironmentMgr::load(const char *fn)
+void WiFiEnvironmentMgr::load_configs(const char *fn)
 {
     File file = SPIFFS.open(fn, "r");
     if(!file){
@@ -30,18 +31,46 @@ void WiFiEnvironmentMgr::load(const char *fn)
     }
 }
 
-void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
+void WiFiEnvironmentMgr::load_APconfig(const char *fn, JsonDocument apDoc)
+{
+    File file = SPIFFS.open(APconfig_filename, "r");
+    if(!file){
+        while(true) {
+            Serial.println("Failed to open file for reading");
+            delay(5000);
+        };
+    }
+    String content = file.readString();
+
+    Serial.printf("Config file '%s' Content:", fn);
+    Serial.print(content);
+    file.close();
+
+    DeserializationError err = deserializeJson(doc, content);
+    if(err == err.Ok)
+        Serial.println("deserialized");
+    else {
+        while(true) {
+            Serial.printf("Deserialization error: %s", err.c_str());
+            delay(5000);
+        }
+    }
+}
+
+void WiFiEnvironmentMgr::set_environment(const char *selected_ssid, const char *mac)
 {
     if(!isLoaded) {
-        load(config_filename);
+        load_configs(config_filename);
         isLoaded = true;
     }
     JsonObject root = doc.as<JsonObject>();
 
     for (JsonPair kv : root) {
         const char *json_ssid = kv.key().c_str();
-        if(strcmp(json_ssid, ssid) != 0)
+        if(strcmp(json_ssid, selected_ssid) != 0)
             continue;
+            
+        ssid = json_ssid;
         config = kv.value().as<JsonObject>();
 
         wifi_password = config["wifi_password"];
@@ -91,7 +120,7 @@ void WiFiEnvironmentMgr::set_environment(const char *ssid, const char *mac)
 void WiFiEnvironmentMgr::addAPs()
 {
     if(!isLoaded) {
-        load(config_filename);
+        load_configs(config_filename);
         isLoaded = true;
     }
     JsonObject root = doc.as<JsonObject>();
@@ -103,6 +132,35 @@ void WiFiEnvironmentMgr::addAPs()
         wifiMulti.addAP(json_ssid, config["wifi_password"]);
     }
 };
+
+
+bool WiFiEnvironmentMgr::set_AP()
+{
+    load_APconfig(APconfig_filename, apDoc);
+    JsonObject apConfig = doc.as<JsonObject>();
+
+    if(apConfig["ssid"])
+        ssid = apConfig["ssid"];
+    else
+        return false;
+
+    if(config["local_ip"])
+        local_ip.fromString(apConfig["local_ip"].as<const char *>());
+    else
+        return false;
+
+    if(apConfig["gateway"])
+        gateway.fromString(apConfig["gateway"].as<const char *>());
+    else
+        return false;
+
+    if(apConfig["subnet"])
+        subnet.fromString(config["subnet"].as<const char *>());
+    else
+        return false;
+
+    return true;
+}
 
 // connect to wifi – returns true if WiFi estabished (either AP or STA)
 bool WiFiEnvironmentMgr::ConnectWifi(void)
@@ -150,6 +208,37 @@ bool WiFiEnvironmentMgr::ConnectWifi(void)
   Serial.println("Connection failed. Fallback to SoftAP");
   //UPDATE_INDICATOR(255, 0, 0);
 
+  if(set_AP()) {
+    //TODO load from AP.json
+    if(false == WiFi.softAPConfig(local_ip, gateway, subnet)) {  
+        Serial.printf("Fallback to SoftAP '%s' as configured failed\n", ssid);
+        goto tryDefaultAP;
+    }
+    
+    JsonObject options = apDoc.as<JsonObject>()["options"];
+    if(options.isNull()) {
+        if(false == WiFi.softAP(ssid)) {
+            goto tryDefaultAP;
+        }
+        return true;
+    } else {
+        if(false == WiFi.softAP(ssid,
+                options["wifi_password"],
+                options["channel"],
+                options["hidden"],
+                options["max_connections"])) {
+            goto tryDefaultAP;
+        }
+        return true;
+    }
+
+    
+
+    return true;
+  }
+
+  tryDefaultAP:
+  
   IPAddress local_IP(192,168,2,1);
   IPAddress gateway(192,168,2,1);
   IPAddress subnet(255,255,255,0);

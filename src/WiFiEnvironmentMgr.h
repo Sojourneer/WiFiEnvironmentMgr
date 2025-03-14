@@ -16,7 +16,8 @@ class WiFiEnvironmentMgr
 {
     public:
         WiFiEnvironmentMgr() {  }
-        void load(const char *fn);
+        void load_configs(const char *fn);
+        void load_APconfig(const char *fn, JsonDocument apDoc);
         void addAPs();
         void set_environment(const char *ssid, const char *mac);
         bool ConnectWifi(void);
@@ -24,6 +25,7 @@ class WiFiEnvironmentMgr
     public: // accessors
         ESP8266WiFiMulti        wifiMulti;
         device_wifi_status_t    device_wifi_status;
+        const char              *ssid;
         const char              *wifi_password;
         IPAddress               local_ip;
         IPAddress               gateway;
@@ -31,11 +33,16 @@ class WiFiEnvironmentMgr
         const char              *host;
 
     private:
+        bool set_AP(void);
+
+    private:
         bool            isLoaded = false;
         JsonDocument    doc;
-        JsonObject      json_ssid;
+        JsonDocument    apDoc;
+        //JsonObject      json_ssid;
         JsonObject      json_mac;
  
+        
     protected:
         JsonObject config;
 };

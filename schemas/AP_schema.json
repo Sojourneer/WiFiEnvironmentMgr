@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", 
+  "title": "test", 
+  "type": "object",
+    "properties": {
+      "ssid": {
+        "type": "string"
+      },
+      "local_ip": {
+        "type": "string",
+        "format":"ipv4"
+      },
+      "gateway": {
+        "type": "string",
+        "format":"ipv4"
+      },
+      "subnet": {
+        "type": "string",
+        "format":"ipv4"
+      },
+      "options": {
+        "type": "object",
+        "properties": {
+          "wifi_password": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "integer"
+          },
+          "hidden": {
+            "type": "integer"
+          },
+          "max_connections": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "wifi_password",
+          "channel",
+          "hidden",
+          "max_connections"
+        ]
+      }
+    },
+    "additionalProperties":false,
+    "required": [
+      "ssid",
+      "local_ip",
+      "gateway",
+      "subnet"
+    ]
+  }
