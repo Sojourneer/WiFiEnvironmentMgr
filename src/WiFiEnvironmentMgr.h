@@ -4,6 +4,20 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 
+// File system selection - define one of these:
+// #define USE_LITTLEFS
+// #define USE_SPIFFS
+
+#if defined(USE_LITTLEFS)
+    #include <LittleFS.h>
+    #define FILESYSTEM LittleFS
+#elif defined(USE_SPIFFS)
+    #include <FS.h>
+    #define FILESYSTEM SPIFFS
+#else
+    #error "Please define either USE_LITTLEFS or USE_SPIFFS"
+#endif
+
 
 typedef enum  {
     DEVICE_STA_READY = 0,

@@ -7,7 +7,7 @@ const char *APconfig_filename = "/AP.json";
 
 void WiFiEnvironmentMgr::load_configs(const char *fn)
 {
-    File file = SPIFFS.open(fn, "r");
+    File file = FILESYSTEM.open(fn, "r");
     if(!file){
         while(true) {
             Serial.println("Failed to open file for reading");
@@ -33,7 +33,7 @@ void WiFiEnvironmentMgr::load_configs(const char *fn)
 
 void WiFiEnvironmentMgr::load_APconfig(const char *fn, JsonDocument apDoc)
 {
-    File file = SPIFFS.open(APconfig_filename, "r");
+    File file = FILESYSTEM.open(APconfig_filename, "r");
     if(!file){
         while(true) {
             Serial.println("Failed to open file for reading");
@@ -210,6 +210,7 @@ bool WiFiEnvironmentMgr::ConnectWifi(void)
 
   if(set_AP()) {
     //TODO load from AP.json
+
     if(false == WiFi.softAPConfig(local_ip, gateway, subnet)) {  
         Serial.printf("Fallback to SoftAP '%s' as configured failed\n", ssid);
         goto tryDefaultAP;
@@ -237,23 +238,28 @@ bool WiFiEnvironmentMgr::ConnectWifi(void)
     return true;
   }
 
+
   tryDefaultAP:
-  
-  IPAddress local_IP(192,168,2,1);
-  IPAddress gateway(192,168,2,1);
-  IPAddress subnet(255,255,255,0);
+  #ifdef SOFTAP_SSID
+    Serial.printf("Setting up default SoftAP '%s'\n", SOFTAP_SSID);
+    IPAddress local_IP(192,168,2,1);
+    IPAddress gateway(192,168,2,1);
+    IPAddress subnet(255,255,255,0);
 
-  if(false == WiFi.softAPConfig(local_IP, gateway, subnet)) {
-    Serial.println("SoftAP config failed.");
-    device_wifi_status = DEVICE_NO_WIFI;
-    return false;
-  }
-  if(false == WiFi.softAP(SOFTAP_SSID, SOFTAP_PSK, SOFTAP_CHANNEL, SOFTAP_HIDDEN, SOFTAP_MAX_CONNECTIONS)) {
-    device_wifi_status = DEVICE_NO_WIFI;
-    return false;
-  }
-  
-  device_wifi_status = DEVICE_SOFT_AP_READY;
+    if(false == WiFi.softAPConfig(local_IP, gateway, subnet)) {
+        Serial.println("SoftAP config failed.");
+        device_wifi_status = DEVICE_NO_WIFI;
+        return false;
+    }
+    if(false == WiFi.softAP(SOFTAP_SSID, SOFTAP_PSK, SOFTAP_CHANNEL, SOFTAP_HIDDEN, SOFTAP_MAX_CONNECTIONS)) {
+        device_wifi_status = DEVICE_NO_WIFI;
+        return false;
+    }
+    
+    device_wifi_status = DEVICE_SOFT_AP_READY;
 
-  return true;
+    return true;
+  #else
+    return false;
+  #endif
 }

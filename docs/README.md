@@ -1,5 +1,5 @@
 # WiFiEnvironmentMgr
-Library providing lookup by SSID of configuration information from a JSON file stored in SPIFFS. 
+Library providing lookup by SSID of configuration information from a JSON file stored in SPIFFS. STA and AP mode are both supported. The API also supports access to MQTT client configuration in the JSON files.
 
 ## environments.json sample
 ~~~
