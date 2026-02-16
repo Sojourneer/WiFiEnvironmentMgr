@@ -32,7 +32,7 @@ class WiFiEnvironmentMgr
         WiFiEnvironmentMgr() {  }
         void load_configs(const char *fn);
         void load_APconfig(const char *fn, JsonDocument apDoc);
-        void addAPs();
+        int addAPs();
         void set_environment(const char *ssid, const char *mac);
         bool ConnectWifi(void);
 
