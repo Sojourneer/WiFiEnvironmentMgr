@@ -1,6 +1,5 @@
 #include "WiFiEnvironmentMgr.h"
 #include <ArduinoJson.h>
-#include <ESP8266WiFiMulti.h>
 
 const char *config_filename = "/environments.json";
 const char *APconfig_filename = "/AP.json";
@@ -64,37 +63,39 @@ void WiFiEnvironmentMgr::set_environment(const char *selected_ssid, const char *
         isLoaded = true;
     }
     JsonObject root = doc.as<JsonObject>();
+    IPAddress empty_ip;
 
     for (JsonPair kv : root) {
-        const char *json_ssid = kv.key().c_str();
-        if(strcmp(json_ssid, selected_ssid) != 0)
+        String json_ssid = kv.key().c_str();
+        //const char *json_ssid = kv.key().c_str();//HACK string misuse
+        if(strcmp(json_ssid.c_str(), selected_ssid) != 0)
             continue;
             
         ssid = json_ssid;
         config = kv.value().as<JsonObject>();
 
-        wifi_password = config["wifi_password"];
+        wifi_password = config["wifi_password"].as<const char *>();
 
         if(config["local_ip"])
             local_ip.fromString(config["local_ip"].as<const char *>());
         else
-            local_ip.clear();
+            local_ip = empty_ip;
 
         if(config["gateway"])
             gateway.fromString(config["gateway"].as<const char *>());
         else
-            gateway.clear();
+            gateway = empty_ip;
 
         if(config["subnet"])
             subnet.fromString(config["subnet"].as<const char *>());
         else
-            subnet.clear();
+            subnet = empty_ip;
 
         if(config["host"]) {
-            host = config["host"];
+            host = config["host"].as<const char *>();
             Serial.printf("Setting host to %s\n", host);
         } else
-            host = nullptr;
+            host = "";
 
         JsonObject mac_ip = config["per_mac"];
         if(!mac_ip.isNull()) {
@@ -110,10 +111,10 @@ void WiFiEnvironmentMgr::set_environment(const char *selected_ssid, const char *
                     local_ip.fromString(ip.c_str());
                 }
                 if(mac_entry["host"].is<JsonString>()) {
-                    host = mac_entry["host"];
+                    host = mac_entry["host"].as<const char *>();
                     Serial.printf("Setting host to %s\n", host);
                 } else {
-                    host = nullptr;
+                    host = "";
                 }
             }
 
@@ -133,10 +134,10 @@ int WiFiEnvironmentMgr::addAPs()
 
     int count = 0;
     for (JsonPair kv : root) {
-        const char *json_ssid = kv.key().c_str();
+        //const char *json_ssid = kv.key().c_str();//HACK string misuse
         JsonObject config = kv.value().as<JsonObject>();
 
-        wifiMulti.addAP(json_ssid, config["wifi_password"]);
+        wifiMulti.addAP(kv.key().c_str(), config["wifi_password"]);
         count++;
     }
     return count;
@@ -151,7 +152,7 @@ bool WiFiEnvironmentMgr::set_AP()
     JsonObject apConfig = doc.as<JsonObject>();
 
     if(apConfig["ssid"])
-        ssid = apConfig["ssid"];
+        ssid = apConfig["ssid"].as<const char *>();
     else
         return false;
     Serial.print(4);
@@ -176,9 +177,9 @@ bool WiFiEnvironmentMgr::set_AP()
         return false;
     Serial.print(7);
     if(apConfig["host"])
-        host = apConfig["host"];
+        host = apConfig["host"].as<const char *>();
     else
-        host = nullptr;
+        host.clear();
     Serial.print(8);
     return true;
 }
@@ -205,8 +206,16 @@ bool WiFiEnvironmentMgr::ConnectWifi(void)
         Serial.print(n);
         Serial.println(" networks found");
         Serial.print("Connecting to WiFi ");
-        wl_status_t wifistatus;
-        while ((wifistatus = wifiMulti.run()) != WL_CONNECTED) {
+        #ifdef PLATFORM_ESP32
+            uint8_t wifistatus;
+            while ((wifistatus = (uint8_t)wifiMulti.run()) != (uint8_t)WL_CONNECTED) {
+        #endif
+        #ifdef PLATFORM_ESP8266
+            wl_status_t wifistatus;
+            while ((wifistatus = (uint8_t)wifiMulti.run()) != WL_CONNECTED) {
+        #endif
+
+
         delay(10000);
         Serial.print(".");
         Serial.printf("%d ", wifistatus);

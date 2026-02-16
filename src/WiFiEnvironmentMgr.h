@@ -1,8 +1,18 @@
 #pragma once
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
+
+#if defined(PLATFORM_ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <ESP8266WiFiMulti.h>
+#elif defined(PLATFORM_ESP32)
+    #include <WiFi.h>
+    #include <WiFiMulti.h>
+    #define ESP8266WiFi WiFi
+    #define ESP8266WiFiMulti WiFiMulti
+#else
+    #error "Board not supported. Please select an ESP8266 or ESP32."
+#endif
 
 // File system selection - define one of these:
 // #define USE_LITTLEFS
@@ -39,12 +49,12 @@ class WiFiEnvironmentMgr
     public: // accessors
         ESP8266WiFiMulti        wifiMulti;
         device_wifi_status_t    device_wifi_status;
-        const char              *ssid;
-        const char              *wifi_password;
+        String                  ssid;
+        String                  wifi_password;
         IPAddress               local_ip;
         IPAddress               gateway;
         IPAddress               subnet;
-        const char              *host;
+        String                  host;
 
     private:
         bool set_AP(void);
